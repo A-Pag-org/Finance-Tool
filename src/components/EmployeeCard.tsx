@@ -4,9 +4,14 @@ import { formatCurrency } from "../utils/format";
 type EmployeeCardProps = {
   employee: Employee;
   onDetails?: () => void;
+  donorCount?: number;
 };
 
-const EmployeeCard = ({ employee, onDetails }: EmployeeCardProps) => {
+const EmployeeCard = ({
+  employee,
+  onDetails,
+  donorCount,
+}: EmployeeCardProps) => {
   const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
     if (!onDetails) {
       return;
@@ -41,6 +46,9 @@ const EmployeeCard = ({ employee, onDetails }: EmployeeCardProps) => {
           <span>
             {formatCurrency(employee.monthlySalary)}/mo
           </span>
+          {typeof donorCount === "number" ? (
+            <span>{donorCount} donors</span>
+          ) : null}
         </div>
       </div>
       <div className="card-footer">
