@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
 :root {
   color-scheme: light;
   --bg: #e6ecec;
@@ -38,6 +40,10 @@ h3 {
 p {
   margin: 4px 0 0;
   color: var(--ink-soft);
+}
+
+a {
+  color: inherit;
 }
 
 .app-shell {
@@ -113,10 +119,26 @@ p {
   gap: 16px;
 }
 
+.page-header h1 {
+  font-size: 2rem;
+}
+
+.page-header p {
+  font-size: 0.98rem;
+}
+
 .page-meta {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.page-meta span {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
 }
 
 .tabs {
@@ -218,6 +240,13 @@ p {
   gap: 12px;
 }
 
+.employee-card h2,
+.donor-card h2,
+.insight-card h2,
+.detail-card h2 {
+  font-size: 1.05rem;
+}
+
 .employee-card-media img {
   width: 100%;
   border-radius: var(--radius-sm);
@@ -251,6 +280,12 @@ p {
   align-items: center;
 }
 
+.detail-header-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .detail-header-media img {
   width: 140px;
   border-radius: var(--radius-md);
@@ -264,6 +299,11 @@ p {
   color: var(--ink-soft);
 }
 
+.detail-subtitle {
+  color: var(--ink-soft);
+  font-size: 1rem;
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -275,6 +315,10 @@ p {
   justify-content: space-between;
   gap: 12px;
   margin-top: 8px;
+}
+
+.detail-row span:first-child {
+  color: var(--ink-soft);
 }
 
 .detail-list {
@@ -302,6 +346,11 @@ p {
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--ink);
+}
+
+.metric-card h3 {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
 }
 
 .chart-grid,
@@ -336,6 +385,13 @@ p {
   padding: 8px 4px;
 }
 
+.data-table th {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
 .simulation-controls {
   display: grid;
   gap: 16px;
@@ -355,6 +411,15 @@ p {
   border-radius: var(--radius-md);
 }
 
+.scenario-selector .tab strong {
+  font-size: 0.95rem;
+}
+
+.scenario-selector .tab span {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
 .manual-controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -365,6 +430,11 @@ p {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.control-group label {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
 }
 
 .control-group input[type="range"],
@@ -380,6 +450,14 @@ p {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   margin-top: 12px;
+}
+
+.insight-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
 }
 
 .insight-card ul {
