@@ -39,18 +39,23 @@ export type SimulationResult = {
 
 export const ADMIN_RATE_BY_TYPE: Record<Donor["type"], number> = {
   International: 0.18,
-  India: 0.12,
+  National: 0.12,
   CSR: 0.15,
   HNI: 0.1,
 };
 
 export const OPERATIONAL_OVERHEAD = 250000;
 
-export const calculateAdminRate = (donorType: Donor["type"]) =>
-  ADMIN_RATE_BY_TYPE[donorType];
+export const calculateAdminRate = (donor: Donor) => {
+  if (donor.adminOverheadPercent > 0) {
+    return donor.adminOverheadPercent / 100;
+  }
+
+  return ADMIN_RATE_BY_TYPE[donor.type];
+};
 
 export const calculateDonorNet = (donor: Donor) => {
-  const adminPercent = calculateAdminRate(donor.type);
+  const adminPercent = calculateAdminRate(donor);
   const adminAmount = donor.contributionAmount * adminPercent;
   const netAmount = donor.contributionAmount - adminAmount;
 
@@ -109,7 +114,11 @@ export const calculateMonthlyBurn = (
   operationalOverhead: number
 ) => {
   const payroll = employees.reduce(
-    (sum, employee) => sum + employee.monthlyCost,
+    (sum, employee) =>
+      sum +
+      employee.monthlySalary +
+      employee.pfContribution +
+      employee.tdsDeduction,
     0
   );
 
