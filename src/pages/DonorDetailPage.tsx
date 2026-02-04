@@ -78,8 +78,9 @@ const DonorDetailPage = () => {
   const buildAllocationScore = (employee: (typeof employees)[number]) => {
     const tenureMonths = getTenureMonths(employee.joiningDate);
     const tenureBoost = 1 + (Math.min(tenureMonths, 48) / 48) * 0.2;
-
-    return employee.monthlySalary * tenureBoost;
+    // Use annual salary for allocation score
+    const annualSalary = employee.monthlySalary * 12;
+    return annualSalary * tenureBoost;
   };
   const programScoreTotals = donor.preferences.reduce<Record<string, number>>(
     (acc, preference) => {

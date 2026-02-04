@@ -64,7 +64,7 @@ const EmployeesPage = () => {
                 <th>Program</th>
                 <th>Location</th>
                 <th>Joining</th>
-                <th>Monthly Salary</th>
+                <th>Annual Salary</th>
                 <th>Donors</th>
                 <th></th>
               </tr>
@@ -85,7 +85,7 @@ const EmployeesPage = () => {
                       {employee.city}, {employee.geography}
                     </td>
                     <td>{formatDate(employee.joiningDate)}</td>
-                    <td>{formatCurrency(employee.monthlySalary)}</td>
+                    <td>{formatCurrency(employee.monthlySalary * 12)}</td>
                     <td>
                       {employeeDonors.length
                         ? employeeDonors.map((donor) => donor.name).join(", ")
@@ -160,16 +160,20 @@ const EmployeesPage = () => {
                   <table className="data-table">
                     <tbody>
                       <tr>
-                        <th>Monthly salary</th>
-                        <td>{formatCurrency(selectedEmployee.monthlySalary)}</td>
+                        <th>Annual salary</th>
+                        <td>{formatCurrency(selectedEmployee.monthlySalary * 12)}</td>
                       </tr>
                       <tr>
-                        <th>PF contribution</th>
-                        <td>{formatCurrency(selectedEmployee.pfContribution)}</td>
+                        <th>Annual PF contribution</th>
+                        <td>{formatCurrency(selectedEmployee.pfContribution * 12)}</td>
                       </tr>
                       <tr>
-                        <th>TDS deduction</th>
-                        <td>{formatCurrency(selectedEmployee.tdsDeduction)}</td>
+                        <th>Annual CTC</th>
+                        <td>{formatCurrency((selectedEmployee.monthlySalary + selectedEmployee.pfContribution) * 12)}</td>
+                      </tr>
+                      <tr>
+                        <th>Annual TDS deduction</th>
+                        <td>{formatCurrency(selectedEmployee.tdsDeduction * 12)}</td>
                       </tr>
                     </tbody>
                   </table>

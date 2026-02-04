@@ -44,7 +44,7 @@ const EmployeeCard = ({
             {employee.city}, {employee.geography}
           </span>
           <span>
-            {formatCurrency(employee.monthlySalary)}/mo
+            {formatCurrency(employee.monthlySalary * 12)}/year
           </span>
           {typeof donorCount === "number" ? (
             <span>{donorCount} donors</span>
