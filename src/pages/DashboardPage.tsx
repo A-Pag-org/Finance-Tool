@@ -41,7 +41,10 @@ const DashboardPage = () => {
     () =>
       donors.filter((donor) => {
         const baseline = ADMIN_RATE_BY_TYPE[donor.type] * 100;
-        return donor.adminOverheadPercent >= baseline * 0.9;
+        return (
+          donor.adminOverheadPercent >= baseline * 0.9 &&
+          donor.adminOverheadPercent <= baseline * 1.1
+        );
       }),
     []
   );

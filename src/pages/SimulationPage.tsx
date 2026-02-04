@@ -178,9 +178,15 @@ const SimulationPage = () => {
       </div>
 
       <div className="chart-grid">
-        <div className="chart-card">Impact score graph (placeholder)</div>
-        <div className="chart-card">Allocation by geography (placeholder)</div>
-        <div className="chart-card">Donor mix (placeholder)</div>
+        <div className="chart-card">
+          Funding vs burn (line chart placeholder)
+        </div>
+        <div className="chart-card">
+          Allocation by geography (bar chart placeholder)
+        </div>
+        <div className="chart-card">
+          Donor type mix (donut chart placeholder)
+        </div>
       </div>
 
       <div className="table-grid">
