@@ -3,7 +3,7 @@ import { useState } from "react";
 import EmployeeCard from "../components/EmployeeCard";
 import HorizontalCarousel from "../components/HorizontalCarousel";
 import Modal from "../components/Modal";
-import { employees, programs } from "../data/mockData";
+import { donors, employees, programs } from "../data/mockData";
 import { formatCurrency, formatDate } from "../utils/format";
 
 const EmployeesPage = () => {
@@ -16,6 +16,16 @@ const EmployeesPage = () => {
   const selectedProgram =
     programs.find((program) => program.id === selectedEmployee?.programId)?.name ??
     "Unassigned";
+  const donorsByProgram = donors.reduce<Record<string, typeof donors>>(
+    (acc, donor) => {
+      donor.preferences.forEach((preference) => {
+        acc[preference.programId] ??= [];
+        acc[preference.programId].push(donor);
+      });
+      return acc;
+    },
+    {}
+  );
 
   return (
     <section className="page-section">
@@ -37,6 +47,7 @@ const EmployeesPage = () => {
           >
             <EmployeeCard
               employee={employee}
+              donorCount={donorsByProgram[employee.programId]?.length ?? 0}
               onDetails={() => setSelectedEmployeeId(employee.id)}
             />
           </div>
@@ -54,6 +65,7 @@ const EmployeesPage = () => {
                 <th>Location</th>
                 <th>Joining</th>
                 <th>Monthly Salary</th>
+                <th>Donors</th>
                 <th></th>
               </tr>
             </thead>
@@ -62,6 +74,7 @@ const EmployeesPage = () => {
                 const programName =
                   programs.find((program) => program.id === employee.programId)
                     ?.name ?? "Unassigned";
+                const employeeDonors = donorsByProgram[employee.programId] ?? [];
 
                 return (
                   <tr key={employee.id}>
@@ -73,6 +86,11 @@ const EmployeesPage = () => {
                     </td>
                     <td>{formatDate(employee.joiningDate)}</td>
                     <td>{formatCurrency(employee.monthlySalary)}</td>
+                    <td>
+                      {employeeDonors.length
+                        ? employeeDonors.map((donor) => donor.name).join(", ")
+                        : "—"}
+                    </td>
                     <td>
                       <button
                         type="button"
@@ -123,6 +141,14 @@ const EmployeesPage = () => {
                       <tr>
                         <th>Joined</th>
                         <td>{formatDate(selectedEmployee.joiningDate)}</td>
+                      </tr>
+                      <tr>
+                        <th>Donors</th>
+                        <td>
+                          {(donorsByProgram[selectedEmployee.programId] ?? [])
+                            .map((donor) => donor.name)
+                            .join(", ") || "—"}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
