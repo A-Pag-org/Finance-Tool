@@ -1,6 +1,6 @@
 import { NavLink, useParams } from "react-router-dom";
-import { employees, programs } from "../data/mockData";
-import { formatCurrency, formatDate } from "../utils/format";
+import { donors, employees, programs } from "../data/mockData";
+import { formatCurrency, formatDate, formatPercent } from "../utils/format";
 
 const EmployeeDetailPage = () => {
   const { employeeId } = useParams();
@@ -21,6 +21,78 @@ const EmployeeDetailPage = () => {
   const program =
     programs.find((item) => item.id === employee.programId)?.name ??
     "Unassigned";
+
+  // Calculate CTC
+  const monthlyCTC = employee.monthlySalary + employee.pfContribution;
+  const annualCTC = monthlyCTC * 12;
+
+  // Calculate donor contributions using same logic as DonorDetailPage
+  const referenceDate = new Date(Date.UTC(2025, 0, 1));
+  const getTenureMonths = (dateString: string) => {
+    const date = new Date(`${dateString}T00:00:00Z`);
+    if (Number.isNaN(date.getTime())) {
+      return 0;
+    }
+
+    return Math.max(
+      0,
+      (referenceDate.getUTCFullYear() - date.getUTCFullYear()) * 12 +
+        (referenceDate.getUTCMonth() - date.getUTCMonth())
+    );
+  };
+
+  const buildAllocationScore = (emp: typeof employee) => {
+    const tenureMonths = getTenureMonths(emp.joiningDate);
+    const tenureBoost = 1 + (Math.min(tenureMonths, 48) / 48) * 0.2;
+    return emp.monthlySalary * tenureBoost;
+  };
+
+  // Group employees by program for score calculation
+  const employeesByProgram = employees.reduce<Record<string, typeof employees>>(
+    (acc, emp) => {
+      acc[emp.programId] ??= [];
+      acc[emp.programId].push(emp);
+      return acc;
+    },
+    {}
+  );
+
+  // Find donors that contribute to this employee's program
+  const contributingDonors = donors
+    .filter((donor) =>
+      donor.preferences.some(
+        (preference) => preference.programId === employee.programId
+      )
+    )
+    .map((donor) => {
+      const preference = donor.preferences.find(
+        (p) => p.programId === employee.programId
+      );
+      
+      if (!preference) {
+        return { donor, allocationPercent: 0 };
+      }
+
+      // Calculate total score for all employees in this program
+      const programEmployees = employeesByProgram[employee.programId] ?? [];
+      const totalProgramScore = programEmployees.reduce(
+        (sum, emp) => sum + buildAllocationScore(emp),
+        0
+      );
+
+      // Calculate this employee's allocation percentage
+      const employeeScore = buildAllocationScore(employee);
+      const allocationPercent = totalProgramScore > 0
+        ? preference.weight * (employeeScore / totalProgramScore)
+        : 0;
+
+      return {
+        donor,
+        allocationPercent,
+      };
+    })
+    .filter((item) => item.allocationPercent > 0)
+    .sort((a, b) => b.allocationPercent - a.allocationPercent);
 
   return (
     <section className="page-section">
@@ -57,7 +129,7 @@ const EmployeeDetailPage = () => {
           </div>
         </section>
         <section className="detail-card">
-          <h2>Metrics</h2>
+          <h2>Compensation</h2>
           <div className="detail-row">
             <span>Monthly salary</span>
             <span>{formatCurrency(employee.monthlySalary)}</span>
@@ -65,6 +137,14 @@ const EmployeeDetailPage = () => {
           <div className="detail-row">
             <span>PF contribution</span>
             <span>{formatCurrency(employee.pfContribution)}</span>
+          </div>
+          <div className="detail-row">
+            <span>Monthly CTC</span>
+            <span>{formatCurrency(monthlyCTC)}</span>
+          </div>
+          <div className="detail-row">
+            <span>Annual CTC</span>
+            <span>{formatCurrency(annualCTC)}</span>
           </div>
           <div className="detail-row">
             <span>TDS deduction</span>
@@ -78,8 +158,41 @@ const EmployeeDetailPage = () => {
           </div>
         </section>
         <section className="detail-card">
-          <h2>Assignments</h2>
-          <p>Program assignments and workload details will appear here.</p>
+          <h2>Donor Contributions</h2>
+          <p className="table-note">
+            Percentage of each donor's contribution allocated to this employee's salary.
+          </p>
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Donor</th>
+                  <th>Type</th>
+                  <th>Allocation %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contributingDonors.length > 0 ? (
+                  contributingDonors.map(({ donor, allocationPercent }) => (
+                    <tr key={donor.id}>
+                      <td>
+                        <div className="table-cell-title">{donor.name}</div>
+                        <div className="table-cell-subtitle">
+                          {formatCurrency(donor.contributionAmount)} contribution
+                        </div>
+                      </td>
+                      <td>{donor.type}</td>
+                      <td>{formatPercent(allocationPercent)}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3}>No donors allocated to this employee's program.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
       </div>
     </section>
