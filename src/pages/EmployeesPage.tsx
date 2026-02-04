@@ -4,7 +4,8 @@ import EmployeeCard from "../components/EmployeeCard";
 import HorizontalCarousel from "../components/HorizontalCarousel";
 import Modal from "../components/Modal";
 import { donors, employees, programs } from "../data/mockData";
-import { formatCurrency, formatDate } from "../utils/format";
+import { buildDonorAllocationMap } from "../utils/allocation";
+import { formatCurrency, formatDate, formatPercent } from "../utils/format";
 
 const EmployeesPage = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(
@@ -171,6 +172,41 @@ const EmployeesPage = () => {
                         <th>TDS deduction</th>
                         <td>{formatCurrency(selectedEmployee.tdsDeduction)}</td>
                       </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <section className="detail-card">
+                <h2>Donor Allocation</h2>
+                <p className="table-note">
+                  Salary allocation weighted by salary and tenure.
+                </p>
+                <div className="table-wrapper">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Donor</th>
+                        <th>Allocation %</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(donorsByProgram[selectedEmployee.programId] ?? []).map(
+                        (donor) => {
+                          const allocationMap = buildDonorAllocationMap(
+                            donor,
+                            employees
+                          );
+                          const allocationPercent =
+                            allocationMap.get(selectedEmployee.id) ?? 0;
+
+                          return (
+                            <tr key={donor.id}>
+                              <td>{donor.name}</td>
+                              <td>{formatPercent(allocationPercent)}</td>
+                            </tr>
+                          );
+                        }
+                      )}
                     </tbody>
                   </table>
                 </div>

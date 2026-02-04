@@ -5,6 +5,7 @@ import {
   employees,
   programs,
 } from "../data/mockData";
+import { buildDonorAllocationMap } from "../utils/allocation";
 import { formatCurrency, formatDate, formatPercent } from "../utils/format";
 
 const DonorDetailPage = () => {
@@ -54,68 +55,20 @@ const DonorDetailPage = () => {
     geography,
     cities: Array.from(cities),
   }));
-  const employeesByProgram = employees.reduce<Record<string, typeof employees>>(
-    (acc, employee) => {
-      acc[employee.programId] ??= [];
-      acc[employee.programId].push(employee);
-      return acc;
-    },
-    {}
-  );
-  const referenceDate = new Date(Date.UTC(2025, 0, 1));
-  const getTenureMonths = (dateString: string) => {
-    const date = new Date(`${dateString}T00:00:00Z`);
-    if (Number.isNaN(date.getTime())) {
-      return 0;
-    }
+  const allocationMap = buildDonorAllocationMap(donor, employees);
+  const allocatedEmployeeRows = employees
+    .filter((employee) => allocationMap.has(employee.id))
+    .map((employee) => {
+      const programName =
+        programs.find((program) => program.id === employee.programId)?.name ??
+        "Program";
 
-    return Math.max(
-      0,
-      (referenceDate.getUTCFullYear() - date.getUTCFullYear()) * 12 +
-        (referenceDate.getUTCMonth() - date.getUTCMonth())
-    );
-  };
-  const buildAllocationScore = (employee: (typeof employees)[number]) => {
-    const tenureMonths = getTenureMonths(employee.joiningDate);
-    const tenureBoost = 1 + (Math.min(tenureMonths, 48) / 48) * 0.2;
-
-    return employee.monthlySalary * tenureBoost;
-  };
-  const programScoreTotals = donor.preferences.reduce<Record<string, number>>(
-    (acc, preference) => {
-      const team = employeesByProgram[preference.programId] ?? [];
-      const totalScore = team.reduce(
-        (sum, employee) => sum + buildAllocationScore(employee),
-        0
-      );
-      acc[preference.programId] = totalScore || 1;
-      return acc;
-    },
-    {}
-  );
-  const allocatedEmployees = employees.filter((employee) =>
-    donor.preferences.some(
-      (preference) => preference.programId === employee.programId
-    )
-  );
-  const allocatedEmployeeRows = allocatedEmployees.map((employee) => {
-    const preference = donor.preferences.find(
-      (item) => item.programId === employee.programId
-    );
-    const programName =
-      programs.find((program) => program.id === employee.programId)?.name ??
-      "Program";
-    const totalScore = programScoreTotals[employee.programId] ?? 1;
-    const allocationPercent = preference
-      ? preference.weight * (buildAllocationScore(employee) / totalScore)
-      : 0;
-
-    return {
-      employee,
-      programName,
-      allocationPercent,
-    };
-  });
+      return {
+        employee,
+        programName,
+        allocationPercent: allocationMap.get(employee.id) ?? 0,
+      };
+    });
   const recentMoves = donorMovementEvents.filter(
     (event) => event.donorId === donor.id
   );

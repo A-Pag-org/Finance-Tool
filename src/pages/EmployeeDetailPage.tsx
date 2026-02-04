@@ -1,6 +1,7 @@
 import { NavLink, useParams } from "react-router-dom";
-import { employees, programs } from "../data/mockData";
-import { formatCurrency, formatDate } from "../utils/format";
+import { donors, employees, programs } from "../data/mockData";
+import { buildDonorAllocationMap } from "../utils/allocation";
+import { formatCurrency, formatDate, formatPercent } from "../utils/format";
 
 const EmployeeDetailPage = () => {
   const { employeeId } = useParams();
@@ -21,6 +22,9 @@ const EmployeeDetailPage = () => {
   const program =
     programs.find((item) => item.id === employee.programId)?.name ??
     "Unassigned";
+  const linkedDonors = donors.filter((donor) =>
+    donor.preferences.some((preference) => preference.programId === employee.programId)
+  );
 
   return (
     <section className="page-section">
@@ -75,6 +79,33 @@ const EmployeeDetailPage = () => {
             <span>
               {formatCurrency(employee.monthlySalary * 12)}
             </span>
+          </div>
+        </section>
+        <section className="detail-card">
+          <h2>Donor Allocation</h2>
+          <p className="table-note">Salary allocation weighted by salary and tenure.</p>
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Donor</th>
+                  <th>Allocation %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {linkedDonors.map((donor) => {
+                  const allocationMap = buildDonorAllocationMap(donor, employees);
+                  const allocationPercent = allocationMap.get(employee.id) ?? 0;
+
+                  return (
+                    <tr key={donor.id}>
+                      <td>{donor.name}</td>
+                      <td>{formatPercent(allocationPercent)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </section>
         <section className="detail-card">
