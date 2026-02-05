@@ -40,13 +40,40 @@ const DashboardPage = () => {
 
   const adminWatchlist = useMemo(
     () =>
-      donors.filter((donor) => {
-        const baseline = ADMIN_RATE_BY_TYPE[donor.type] * 100;
-        return (
-          donor.adminOverheadPercent >= baseline * 0.9 &&
-          donor.adminOverheadPercent <= baseline * 1.1
-        );
-      }),
+      donors
+        .filter((donor) => {
+          const baseline = ADMIN_RATE_BY_TYPE[donor.type] * 100;
+          return (
+            donor.adminOverheadPercent >= baseline * 0.9 &&
+            donor.adminOverheadPercent <= baseline * 1.1
+          );
+        })
+        .map((donor) => {
+          const baseline = ADMIN_RATE_BY_TYPE[donor.type] * 100;
+          const actual = donor.adminOverheadPercent;
+          const difference = actual - baseline;
+          const percentOfBaseline = (actual / baseline) * 100;
+          
+          // Determine status color
+          let status: 'safe' | 'warning' | 'critical';
+          if (actual < baseline * 0.9) {
+            status = 'safe';
+          } else if (actual > baseline * 1.1) {
+            status = 'critical';
+          } else {
+            status = 'warning';
+          }
+          
+          return {
+            donor,
+            baseline,
+            actual,
+            difference,
+            percentOfBaseline,
+            status,
+          };
+        })
+        .sort((a, b) => Math.abs(b.difference) - Math.abs(a.difference)),
     []
   );
 
@@ -125,23 +152,56 @@ const DashboardPage = () => {
 
         <section className="detail-card">
           <h2>Donors near admin threshold</h2>
-          <div className="table-wrapper">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Donor</th>
-                  <th>Admin %</th>
-                </tr>
-              </thead>
-              <tbody>
-                {adminWatchlist.map((donor) => (
-                  <tr key={donor.id}>
-                    <td>{donor.name}</td>
-                    <td>{formatPercent(donor.adminOverheadPercent)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <p className="table-note">
+            Monitoring donors within ±10% of their baseline admin overhead threshold.
+          </p>
+          <div className="admin-threshold-list">
+            {adminWatchlist.map(({ donor, baseline, actual, difference, percentOfBaseline, status }) => (
+              <div key={donor.id} className="admin-threshold-item">
+                <div className="admin-threshold-header">
+                  <div className="admin-threshold-info">
+                    <span className="admin-threshold-name">{donor.name}</span>
+                    <span className="admin-threshold-type">{donor.type}</span>
+                  </div>
+                  <div className="admin-threshold-values">
+                    <span className="admin-threshold-actual">
+                      {formatPercent(actual)}
+                    </span>
+                    <span className="admin-threshold-difference" data-status={status}>
+                      {difference > 0 ? '+' : ''}{difference.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+                <div className="admin-threshold-bar-container">
+                  <div className="admin-threshold-bar-track">
+                    {/* Safe zone (below 90%) */}
+                    <div className="admin-threshold-zone safe" style={{ width: '40%' }} />
+                    {/* Warning zone (90-110%) */}
+                    <div className="admin-threshold-zone warning" style={{ width: '20%' }} />
+                    {/* Critical zone (above 110%) */}
+                    <div className="admin-threshold-zone critical" style={{ width: '40%' }} />
+                    {/* Baseline marker */}
+                    <div className="admin-threshold-baseline" style={{ left: '50%' }}>
+                      <span className="admin-threshold-baseline-label">
+                        {formatPercent(baseline)}
+                      </span>
+                    </div>
+                    {/* Actual value indicator */}
+                    <div 
+                      className="admin-threshold-indicator" 
+                      data-status={status}
+                      style={{ 
+                        left: `${Math.min(Math.max((percentOfBaseline - 80) * 2.5, 0), 100)}%` 
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="admin-threshold-footer">
+                  <span>Contribution: {formatCurrency(donor.contributionAmount)}</span>
+                  <span>Baseline: {formatPercent(baseline)}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       </div>
