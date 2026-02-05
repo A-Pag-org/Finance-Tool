@@ -165,6 +165,74 @@ const SimulationPage = () => {
         </div>
       </header>
 
+      {/* Increment Summary */}
+      {hasAnyIncrements && (
+        <section className="detail-card">
+          <h2>📋 Planned Increments Summary</h2>
+          <div className="increment-summary-grid">
+            <div className="increment-summary-stats">
+              <div className="increment-stat">
+                <span className="increment-stat-label">Employees with increments</span>
+                <span className="increment-stat-value">
+                  {Object.values(increments).filter(inc => inc > 0).length} / {baseEmployees.length}
+                </span>
+              </div>
+              <div className="increment-stat">
+                <span className="increment-stat-label">Average increment</span>
+                <span className="increment-stat-value">
+                  {(Object.values(increments).reduce((sum, inc) => sum + inc, 0) / 
+                    Object.values(increments).filter(inc => inc > 0).length).toFixed(1)}%
+                </span>
+              </div>
+              <div className="increment-stat">
+                <span className="increment-stat-label">Additional annual cost</span>
+                <span className="increment-stat-value">
+                  {formatCurrency(
+                    baseEmployees.reduce((sum, emp) => {
+                      const inc = increments[emp.id] || 0;
+                      const increase = emp.monthlySalary * 12 * (inc / 100);
+                      const pfIncrease = increase * 0.12;
+                      return sum + increase + pfIncrease;
+                    }, 0)
+                  )}
+                </span>
+              </div>
+            </div>
+            <div className="increment-summary-list">
+              <h3>Employees with planned increments:</h3>
+              <div className="increment-summary-items">
+                {baseEmployees
+                  .filter(emp => (increments[emp.id] || 0) > 0)
+                  .sort((a, b) => (increments[b.id] || 0) - (increments[a.id] || 0))
+                  .map(emp => {
+                    const inc = increments[emp.id] || 0;
+                    const currentAnnual = emp.monthlySalary * 12;
+                    const projectedAnnual = calculateProjectedSalary(emp.monthlySalary, inc) * 12;
+                    const increase = projectedAnnual - currentAnnual;
+                    return (
+                      <div key={emp.id} className="increment-summary-item">
+                        <div className="increment-summary-item-info">
+                          <span className="increment-summary-name">{emp.name}</span>
+                          <span className="increment-summary-role">{emp.role}</span>
+                        </div>
+                        <div className="increment-summary-item-values">
+                          <span className="increment-summary-percent">+{inc}%</span>
+                          <span className="increment-summary-amount">
+                            {formatCurrency(currentAnnual)} → {formatCurrency(projectedAnnual)}
+                          </span>
+                          <span className="increment-summary-increase">
+                            +{formatCurrency(increase)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       <div className="simulation-controls">
         <div>
           <h2 style={{ marginBottom: 'var(--space-sm)' }}>What do you want to simulate?</h2>
@@ -190,10 +258,15 @@ const SimulationPage = () => {
         
         {activeScenarioId === 'custom' && (
           <div className="manual-controls">
-            <h3>Adjust Parameters</h3>
+            <h3>Fine-Tune Parameters</h3>
+            <p className="table-note" style={{ gridColumn: '1 / -1', marginTop: '-var(--space-sm)' }}>
+              {hasAnyIncrements 
+                ? 'These adjustments apply ON TOP of individual employee increments you set'
+                : 'Set individual increments on Employees page, or use these for quick "what if" tests'}
+            </p>
             <div className="control-group">
               <div className="control-header">
-                <label htmlFor="salaryMultiplier">Staff Costs</label>
+                <label htmlFor="salaryMultiplier">Additional Salary Adjustment</label>
                 <span className="control-value">{salaryMultiplier > 1 ? '▲' : salaryMultiplier < 1 ? '▼' : '='} {((salaryMultiplier - 1) * 100).toFixed(0)}%</span>
               </div>
               <input
@@ -208,13 +281,14 @@ const SimulationPage = () => {
                 }
               />
               <div className="control-impact">
-                Current: {formatCurrency(baselineSimulation.monthlyBurn)} → 
-                Projected: {formatCurrency(simulation.monthlyBurn)}
+                {hasAnyIncrements 
+                  ? `Applied after individual increments (e.g., for inflation adjustment)`
+                  : `Current: ${formatCurrency(baselineSimulation.monthlyBurn)} → Projected: ${formatCurrency(simulation.monthlyBurn)}`}
               </div>
             </div>
             <div className="control-group">
               <div className="control-header">
-                <label htmlFor="donorMultiplier">Donor Funding</label>
+                <label htmlFor="donorMultiplier">Funding Change</label>
                 <span className="control-value">{donorMultiplier > 1 ? '▲' : donorMultiplier < 1 ? '▼' : '='} {((donorMultiplier - 1) * 100).toFixed(0)}%</span>
               </div>
               <input
@@ -229,14 +303,13 @@ const SimulationPage = () => {
                 }
               />
               <div className="control-impact">
-                Current: {formatCurrency(baselineSimulation.totalContributions)} → 
-                Projected: {formatCurrency(simulation.totalContributions)}
+                Test new donor, donor exit, or funding reduction scenarios
               </div>
             </div>
             <div className="control-group">
               <div className="control-header">
-                <label htmlFor="overheadInput">Monthly Overhead</label>
-                <span className="control-help">Rent, utilities, admin costs</span>
+                <label htmlFor="overheadInput">Monthly Operational Overhead</label>
+                <span className="control-help">Fixed monthly costs</span>
               </div>
               <input
                 id="overheadInput"
@@ -249,7 +322,7 @@ const SimulationPage = () => {
                 }
               />
               <div className="control-impact">
-                Includes: Office rent, utilities, admin salaries, software, etc.
+                Rent, utilities, admin salaries, software, insurance, etc.
               </div>
             </div>
           </div>
@@ -360,6 +433,74 @@ const SimulationPage = () => {
         </div>
       </div>
 
+      {/* Donor Usage Timeline */}
+      {simulation.donorRunways && simulation.donorRunways.length > 0 && (
+        <section className="detail-card">
+          <h2>📅 Recommended Donor Usage Timeline</h2>
+          <p className="table-note">
+            Strategic order to use donor funds for optimal cash flow and runway extension
+          </p>
+          <div className="donor-timeline">
+            {simulation.donorRunways
+              .sort((a, b) => {
+                // Sort by strategy: Use donors with longer runway first to spread risk
+                const aScore = simulation.donorScores?.find(s => s.donorId === a.donorId)?.totalScore || 0;
+                const bScore = simulation.donorScores?.find(s => s.donorId === b.donorId)?.totalScore || 0;
+                return bScore - aScore;
+              })
+              .map((runway, index) => {
+                const donorData = donors.find(d => d.id === runway.donorId);
+                const score = simulation.donorScores?.find(s => s.donorId === runway.donorId);
+                const isRecommended = index === 0;
+                
+                return (
+                  <div key={runway.donorId} className={`donor-timeline-item ${isRecommended ? 'recommended' : ''}`}>
+                    <div className="donor-timeline-rank">
+                      <span className="donor-timeline-number">{index + 1}</span>
+                      {isRecommended && <span className="donor-timeline-badge">USE FIRST</span>}
+                    </div>
+                    <div className="donor-timeline-content">
+                      <div className="donor-timeline-header">
+                        <div>
+                          <h3>{runway.donorName}</h3>
+                          <span className="donor-timeline-type">{donorData?.type}</span>
+                        </div>
+                        <div className="donor-timeline-score">
+                          Score: {score?.totalScore || 0}/100
+                        </div>
+                      </div>
+                      <div className="donor-timeline-metrics">
+                        <div className="donor-timeline-metric">
+                          <span>Available Funds</span>
+                          <strong>{formatCurrency(runway.availableFunds)}</strong>
+                        </div>
+                        <div className="donor-timeline-metric">
+                          <span>Can Cover</span>
+                          <strong>{runway.runwayMonths.toFixed(1)} months</strong>
+                        </div>
+                        <div className="donor-timeline-metric">
+                          <span>Until</span>
+                          <strong>{runway.depletionDate}</strong>
+                        </div>
+                        <div className="donor-timeline-metric">
+                          <span>Admin Rate</span>
+                          <strong>{formatPercent(donorData?.adminOverheadPercent || 0)}</strong>
+                        </div>
+                      </div>
+                      <div className="donor-timeline-recommendation">
+                        {index === 0 && '✓ Start with this donor - highest score and optimal efficiency'}
+                        {index === 1 && '→ Use next after first donor depletes'}
+                        {index === 2 && '→ Reserve for later months or emergency'}
+                        {index > 2 && simulation.donorRunways && `→ Use in month ${Math.floor(simulation.donorRunways.slice(0, index).reduce((sum, r) => sum + r.runwayMonths, 0)) + 1}+`}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </section>
+      )}
+
       {/* Allocation Strategy Recommendations */}
       {simulation.allocationStrategies && (
         <section className="detail-card">
@@ -401,6 +542,70 @@ const SimulationPage = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Month-by-Month Cash Flow */}
+      {simulation.donorRunways && (
+        <section className="detail-card">
+          <h2>💰 12-Month Cash Flow Projection</h2>
+          <p className="table-note">
+            Detailed monthly breakdown showing fund usage and runway
+          </p>
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Opening Balance</th>
+                  <th>Funding In</th>
+                  <th>Burn Out</th>
+                  <th>Closing Balance</th>
+                  <th>Primary Donor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: Math.min(12, Math.ceil(simulation.runwayMonths)) }, (_, i) => {
+                  const monthNumber = i + 1;
+                  const monthlyFunding = simulation.totalNetFunding / 12;
+                  const monthlyBurn = simulation.monthlyBurn;
+                  const openingBalance = simulation.totalNetFunding - (monthlyBurn * i);
+                  const closingBalance = openingBalance + monthlyFunding - monthlyBurn;
+                  
+                  // Determine which donor to primarily use this month
+                  let cumulativeMonths = 0;
+                  let primaryDonor = simulation.donorRunways?.[0];
+                  if (simulation.donorRunways) {
+                    for (const runway of simulation.donorRunways) {
+                      if (i < cumulativeMonths + runway.runwayMonths) {
+                        primaryDonor = runway;
+                        break;
+                      }
+                      cumulativeMonths += runway.runwayMonths;
+                    }
+                  }
+
+                  const isLowBalance = closingBalance < monthlyBurn * 3;
+                  const isCritical = closingBalance < monthlyBurn;
+
+                  return (
+                    <tr key={monthNumber} className={isCritical ? 'critical-row' : isLowBalance ? 'warning-row' : ''}>
+                      <td><strong>Month {monthNumber}</strong></td>
+                      <td>{formatCurrency(Math.max(0, openingBalance))}</td>
+                      <td>{formatCurrency(monthlyFunding)}</td>
+                      <td>{formatCurrency(monthlyBurn)}</td>
+                      <td>
+                        <strong style={{ color: isCritical ? 'var(--error)' : isLowBalance ? 'var(--warning)' : 'var(--success)' }}>
+                          {formatCurrency(Math.max(0, closingBalance))}
+                        </strong>
+                      </td>
+                      <td>{primaryDonor?.donorName || '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </section>
       )}
