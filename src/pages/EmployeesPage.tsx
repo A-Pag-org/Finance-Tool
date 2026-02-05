@@ -2,9 +2,9 @@ import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import EmployeeCard from "../components/EmployeeCard";
 import HorizontalCarousel from "../components/HorizontalCarousel";
-import Modal from "../components/Modal";
+import Drawer from "../components/Drawer";
 import { donors, employees as baseEmployees, programs } from "../data/mockData";
-import { formatCurrency, formatDate, calculateProjectedSalary } from "../utils/format";
+import { formatCurrency, formatDate, calculateProjectedSalary, calculateProjectedCTC } from "../utils/format";
 import { useEmployeeIncrements } from "../hooks/useEmployeeIncrements";
 
 const EmployeesPage = () => {
@@ -150,14 +150,14 @@ const EmployeesPage = () => {
           </table>
         </div>
       </section>
-      <Modal
+      <Drawer
         isOpen={Boolean(selectedEmployee)}
         title="Employee details"
         onClose={() => setSelectedEmployeeId(null)}
       >
         {selectedEmployee ? (
-          <div className="modal-grid">
-            <div className="modal-hero">
+          <div className="drawer-content-grid">
+            <div className="drawer-hero">
               <img src={selectedEmployee.photoUrl} alt={selectedEmployee.name} />
               <div>
                 <p className="detail-eyebrow">Employee</p>
@@ -165,65 +165,115 @@ const EmployeesPage = () => {
                 <p className="detail-subtitle">{selectedEmployee.role}</p>
               </div>
             </div>
+
+            {/* Increment Planner in Drawer */}
+            <div className="increment-planner">
+              <label htmlFor="drawer-increment-input" className="increment-planner-label">
+                Plan Salary Increment
+              </label>
+              <div className="increment-planner-control">
+                <input
+                  id="drawer-increment-input"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value={selectedEmployee.plannedIncrement || 0}
+                  onChange={(e) => setIncrement(selectedEmployee.id, Number(e.target.value))}
+                  className="increment-planner-input"
+                  placeholder="0"
+                />
+                <span className="increment-planner-suffix">%</span>
+              </div>
+              {(selectedEmployee.plannedIncrement || 0) > 0 && (
+                <div className="increment-planner-preview">
+                  Planning {selectedEmployee.plannedIncrement}% increment
+                </div>
+              )}
+            </div>
+
             <div className="detail-grid">
               <section className="detail-card">
                 <h2>Profile</h2>
-                <div className="table-wrapper">
-                  <table className="data-table">
-                    <tbody>
-                      <tr>
-                        <th>Location</th>
-                        <td>
-                          {selectedEmployee.city}, {selectedEmployee.geography}
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>Program</th>
-                        <td>{selectedProgram}</td>
-                      </tr>
-                      <tr>
-                        <th>Joined</th>
-                        <td>{formatDate(selectedEmployee.joiningDate)}</td>
-                      </tr>
-                      <tr>
-                        <th>Donors</th>
-                        <td>
-                          {(donorsByProgram[selectedEmployee.programId] ?? [])
-                            .map((donor) => donor.name)
-                            .join(", ") || "—"}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div className="detail-row">
+                  <span>Location</span>
+                  <span>{selectedEmployee.city}, {selectedEmployee.geography}</span>
+                </div>
+                <div className="detail-row">
+                  <span>Program</span>
+                  <span>{selectedProgram}</span>
+                </div>
+                <div className="detail-row">
+                  <span>Joined</span>
+                  <span>{formatDate(selectedEmployee.joiningDate)}</span>
+                </div>
+                <div className="detail-row">
+                  <span>Donors</span>
+                  <span>
+                    {(donorsByProgram[selectedEmployee.programId] ?? [])
+                      .map((donor) => donor.name)
+                      .join(", ") || "—"}
+                  </span>
                 </div>
               </section>
+
               <section className="detail-card">
                 <h2>Compensation</h2>
-                <div className="table-wrapper">
-                  <table className="data-table">
-                    <tbody>
-                      <tr>
-                        <th>Annual salary</th>
-                        <td>{formatCurrency(selectedEmployee.monthlySalary * 12)}</td>
-                      </tr>
-                      <tr>
-                        <th>Annual PF contribution</th>
-                        <td>{formatCurrency(selectedEmployee.pfContribution * 12)}</td>
-                      </tr>
-                      <tr>
-                        <th>Annual CTC</th>
-                        <td>{formatCurrency((selectedEmployee.monthlySalary + selectedEmployee.pfContribution) * 12)}</td>
-                      </tr>
-                      <tr>
-                        <th>Annual TDS deduction</th>
-                        <td>{formatCurrency(selectedEmployee.tdsDeduction * 12)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                {(selectedEmployee.plannedIncrement || 0) > 0 ? (
+                  <div className="compensation-comparison">
+                    <div className="compensation-column">
+                      <h3>Current</h3>
+                      <div className="detail-row">
+                        <span>Annual salary</span>
+                        <span>{formatCurrency(selectedEmployee.monthlySalary * 12)}</span>
+                      </div>
+                      <div className="detail-row">
+                        <span>Annual CTC</span>
+                        <span>{formatCurrency((selectedEmployee.monthlySalary + selectedEmployee.pfContribution) * 12)}</span>
+                      </div>
+                    </div>
+                    <div className="compensation-column projected">
+                      <h3>Projected (+{selectedEmployee.plannedIncrement}%)</h3>
+                      {(() => {
+                        const proj = calculateProjectedCTC(selectedEmployee.monthlySalary, selectedEmployee.plannedIncrement || 0);
+                        return (
+                          <>
+                            <div className="detail-row">
+                              <span>Annual salary</span>
+                              <span>{formatCurrency(proj.salary)}</span>
+                            </div>
+                            <div className="detail-row">
+                              <span>Annual CTC</span>
+                              <span className="projected-highlight">{formatCurrency(proj.ctc)}</span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="detail-row">
+                      <span>Annual salary</span>
+                      <span>{formatCurrency(selectedEmployee.monthlySalary * 12)}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span>Annual PF contribution</span>
+                      <span>{formatCurrency(selectedEmployee.pfContribution * 12)}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span>Annual CTC</span>
+                      <span>{formatCurrency((selectedEmployee.monthlySalary + selectedEmployee.pfContribution) * 12)}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span>Annual TDS deduction</span>
+                      <span>{formatCurrency(selectedEmployee.tdsDeduction * 12)}</span>
+                    </div>
+                  </>
+                )}
               </section>
             </div>
-            <div className="modal-actions">
+            <div className="drawer-actions">
               <NavLink
                 to={`/employees/${selectedEmployee.id}`}
                 className="modal-link"
@@ -240,7 +290,7 @@ const EmployeesPage = () => {
             </div>
           </div>
         ) : null}
-      </Modal>
+      </Drawer>
     </section>
   );
 };

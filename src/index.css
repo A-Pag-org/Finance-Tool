@@ -1253,6 +1253,174 @@ a {
   font-size: 0.875rem;
 }
 
+/* Drawer System */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  z-index: 1000;
+  animation: drawerFadeIn var(--transition-base);
+}
+
+@keyframes drawerFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.drawer-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.drawer-panel {
+  position: relative;
+  width: min(640px, 100vw);
+  height: 100vh;
+  background: var(--card);
+  border-left: 1px solid var(--border-hover);
+  box-shadow: var(--shadow-xl);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  animation: drawerSlideIn var(--transition-slow);
+  overflow: hidden;
+}
+
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.drawer-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.drawer-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--ink-muted);
+  border-radius: var(--radius-full);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.drawer-close:hover {
+  background: var(--surface);
+  border-color: var(--border-hover);
+  color: var(--ink);
+  transform: rotate(90deg);
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-xl);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.drawer-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.drawer-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.drawer-body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+.drawer-body::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+/* Modal actions adapted for drawer */
+.drawer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-lg);
+}
+
+/* Drawer content */
+.drawer-content-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.drawer-hero {
+  display: flex;
+  gap: var(--space-lg);
+  align-items: center;
+  padding: var(--space-lg);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+}
+
+.drawer-hero img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+}
+
+/* Responsive drawer */
+@media (max-width: 768px) {
+  .drawer-panel {
+    width: 100vw;
+  }
+  
+  .drawer-hero {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .drawer-hero img {
+    width: 100px;
+    height: 100px;
+  }
+}
+
 /* Modal System */
 .modal-overlay {
   position: fixed;

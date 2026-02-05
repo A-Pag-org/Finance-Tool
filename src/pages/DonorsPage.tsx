@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import DonorCard from "../components/DonorCard";
 import HorizontalCarousel from "../components/HorizontalCarousel";
-import Modal from "../components/Modal";
+import Drawer from "../components/Drawer";
 import { donors, programs } from "../data/mockData";
 import { formatCurrency, formatPercent } from "../utils/format";
 
@@ -81,14 +81,14 @@ const DonorsPage = () => {
           </table>
         </div>
       </section>
-      <Modal
+      <Drawer
         isOpen={Boolean(selectedDonor)}
         title="Donor details"
         onClose={() => setSelectedDonorId(null)}
       >
         {selectedDonor ? (
-          <div className="modal-grid">
-            <div className="modal-hero">
+          <div className="drawer-content-grid">
+            <div className="drawer-hero">
               <div>
                 <p className="detail-eyebrow">Donor</p>
                 <h3>{selectedDonor.name}</h3>
@@ -98,23 +98,17 @@ const DonorsPage = () => {
             <div className="detail-grid">
               <section className="detail-card">
                 <h2>Overview</h2>
-                <div className="table-wrapper">
-                  <table className="data-table">
-                    <tbody>
-                      <tr>
-                        <th>Contribution</th>
-                        <td>{formatCurrency(selectedDonor.contributionAmount)}</td>
-                      </tr>
-                      <tr>
-                        <th>Admin overhead</th>
-                        <td>{formatPercent(selectedDonor.adminOverheadPercent)}</td>
-                      </tr>
-                      <tr>
-                        <th>FCRA</th>
-                        <td>{selectedDonor.fcraApproved ? "Approved" : "No"}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div className="detail-row">
+                  <span>Contribution</span>
+                  <span>{formatCurrency(selectedDonor.contributionAmount)}</span>
+                </div>
+                <div className="detail-row">
+                  <span>Admin overhead</span>
+                  <span>{formatPercent(selectedDonor.adminOverheadPercent)}</span>
+                </div>
+                <div className="detail-row">
+                  <span>FCRA</span>
+                  <span>{selectedDonor.fcraApproved ? "Approved" : "No"}</span>
                 </div>
               </section>
               <section className="detail-card">
@@ -139,7 +133,7 @@ const DonorsPage = () => {
                 </div>
               </section>
             </div>
-            <div className="modal-actions">
+            <div className="drawer-actions">
               <NavLink
                 to={`/donors/${selectedDonor.id}`}
                 className="modal-link"
@@ -156,7 +150,7 @@ const DonorsPage = () => {
             </div>
           </div>
         ) : null}
-      </Modal>
+      </Drawer>
     </section>
   );
 };
