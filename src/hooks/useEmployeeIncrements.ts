@@ -8,9 +8,31 @@ export const useEmployeeIncrements = () => {
     return stored ? JSON.parse(stored) : {};
   });
 
+  // Save to localStorage whenever increments change
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(increments));
   }, [increments]);
+
+  // Listen for changes from other tabs/windows
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const newIncrements = JSON.parse(e.newValue);
+          setIncrements(newIncrements);
+        } catch (error) {
+          console.error('Failed to parse increments from storage:', error);
+        }
+      }
+    };
+
+    // Add event listener for cross-tab synchronization
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const setIncrement = (employeeId: string, increment: number) => {
     setIncrements(prev => ({
